@@ -1,0 +1,30 @@
+name: Build Android APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, master]
+
+jobs:
+  build-apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+      - name: Unpack project if needed
+        run: |
+          if [ ! -d client ] && [ ! -d msj-secure ]; then
+            for z in *.zip; do unzip -o "$z"; done
+          fi
+          DIR="."
+          [ -d msj-secure/client ] && DIR="msj-secure"
+          echo "PROJECT_DIR=$DIR" >> "$GITHUB_ENV"
+      - name: Build APK
+        run: bash "$PROJECT_DIR/scripts/ci_build_apk.sh"
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: msj-secure-debug-apk
+          path: |
+            client/bin/*.apk
+            msj-secure/client/bin/*.apk
